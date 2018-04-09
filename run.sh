@@ -1,4 +1,5 @@
-#!/usr/bin
+#!/bin/bash
+
 # First argument is N
 # Second argument is L
 # Third argument is S
