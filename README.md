@@ -1,5 +1,5 @@
 # S_Beauty_Contest
-Small project on study, with MPI...
+A small project to study to learn distributed processing with MPI library.
 
 ## ENGLISH
 Pasztetowo decided to end up with harmful stereotypes about the appearance of its residents and residents. In connection with this, the mayor decided to arrange a beauty contest in which visitors from the outside can also compete with residents and residents.
