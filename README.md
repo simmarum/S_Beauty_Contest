@@ -13,3 +13,6 @@ Pasztetowo zdecydowało się raz na zawsze skończyć z krzywdzącymi stereotypa
 
 # Require a MPI
 `sudo apt-get install libcr-dev mpich mpich-doc`
+
+# To run program (if no error occurs)
+`bash run.sh`
