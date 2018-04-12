@@ -17,3 +17,7 @@ Pasztetowo zdecydowało się raz na zawsze skończyć z krzywdzącymi stereotypa
 
 # To run program (if no error occurs)
 `bash run.sh`
+
+# Project editor
+Visual Studio Code 
+https://code.visualstudio.com/download

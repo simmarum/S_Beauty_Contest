@@ -27,8 +27,4 @@ if [ -z "$3" ]
     exit 1
 fi
 
-echo "Running makefile"
-make
-echo "Done makefile!"
-
-mpirun -np $1 ./contest.out $2 $3
+make && mpirun -np $1 ./contest.out $2 $3
