@@ -30,7 +30,7 @@ fi
 
 if [ -n "$4" ]
   then
-    mpirun --hostfile $4 -np $1 ./contest $2 $3
+    make && mpirun --hostfile $4 -np $1 ./contest $2 $3
 else
-  mpirun -np $1 ./contest $2 $3
+  make && mpirun -np $1 ./contest $2 $3
 fi
