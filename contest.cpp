@@ -3,15 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/// ERROR CODE DEFINE SECTION ///
+#define WRONG_PARAMETERS 11  // Wrong parameters (number of it or type)
+
 bool cli_parameters(int argc, char *argv[], int &L, int &S);
 
 int main(int argc, char *argv[]) {
   int L = 0, S = 0;
 
   if (!cli_parameters(argc, argv, L, S)) {
-    return 11;
+    return WRONG_PARAMETERS;
   }
-  printf("%d %d \n", L, S);
+
   int rank, size;
 
   MPI_Init(&argc, &argv);               /* starts MPI */
@@ -19,7 +22,7 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
   printf("Hello world from process %d of %d\n", rank, size);
   MPI_Finalize();
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 bool cli_parameters(int argc, char *argv[], int &L, int &S) {
