@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.clang_format_fallbackStyle": "Google",
+		"C_Cpp.clang_format_sortIncludes": true,
+		"editor.formatOnSave": true,
+		"files.associations": {
+			"array": "c",
+			"initializer_list": "c",
+			"utility": "c",
+			"mpi.h": "c",
+			"stdio.h": "c"
+		}
+	}
+}
