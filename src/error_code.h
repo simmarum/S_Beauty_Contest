@@ -3,4 +3,4 @@
 
 #define ERROR_WRONG_PARAMETERS 11  // Wrong parameters (number of it or type)
 
-#endif ERROR_CODE_H
+#endif  // ERROR_CODE_H
