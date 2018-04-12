@@ -1,0 +1,3 @@
+Error code --- description
+
+11 --- wrong parameters to script (probably not a number)
