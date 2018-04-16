@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     MPI_Status status;
     packet_s recv;
     for (int i = 0; i < 10; i++) {
-      myRecv(recv, 0, 100, status);
+      myRecv(lclock, recv, 0, 100, status);
       printf("Rank %d: Received from %d: clock = %d message = %d\n", rank,
              status.MPI_SOURCE, recv.clock, recv.message);
     }
