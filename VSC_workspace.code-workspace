@@ -14,7 +14,8 @@
 			"initializer_list": "c",
 			"utility": "c",
 			"mpi.h": "c",
-			"stdio.h": "c"
+			"stdio.h": "c",
+			"system_error": "cpp"
 		}
 	}
 }
