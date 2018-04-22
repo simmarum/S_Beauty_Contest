@@ -1,6 +1,9 @@
 # Our final file
 contest
 
+# csv log
+log/*.csv
+
 # Prerequisites
 *.d
 

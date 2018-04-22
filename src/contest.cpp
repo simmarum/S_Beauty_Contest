@@ -15,6 +15,7 @@
 #include "tags.h"
 
 int pretty = true;
+int csv = true;
 int debug = false;
 
 // function definitions
