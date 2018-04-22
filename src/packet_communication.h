@@ -2,20 +2,19 @@
 #define PACKET_COMMUNICATION_H
 
 #include <mpi.h>
-extern int pretty;
+extern int raw_s_r;
 extern int csv;
-// Struct for send message
-// DON'T change because it corespond to MPI_2INT which require struct with only
-// 2 int!
-struct packet_s {
-  int clock;  // lamport clock
-  int message;
-};
 
-int mySend(int &lclock, int message, int where, int tag, int myID);
-int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status,
+// structure to send and receive is array of 3 int
+// int send[3];
+// int recv[3];
+
+int mySend(int &lclock, int message, int mem_clock, int where, int tag,
+           int myID);
+int myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
            int myID);
 
-int myBroadCast(int &lclock, int message, int tag, int myID, int sizePool);
+int myBroadCast(int &lclock, int message, int mem_clock, int tag, int myID,
+                int sizePool);
 
 #endif  // PACKET_COMMUNICATION_H

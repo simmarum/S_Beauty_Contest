@@ -16,17 +16,19 @@ char filename[40];
 struct tm *timenow;
 time_t now = time(NULL);
 
-int mySend(int &lclock, int message, int where, int tag, int myID) {
-  packet_s send;
+int mySend(int &lclock, int message, int mem_clock, int where, int tag,
+           int myID) {
+  int send[3];
   pthread_mutex_lock(&send_clock_mutex);
   lclock += 1;
-  send.clock = lclock;
+  send[0] = lclock;
   pthread_mutex_unlock(&send_clock_mutex);
-  send.message = message;
-  MPI_Send(&send, 1, MPI_2INT, where, tag, MPI_COMM_WORLD);
-  if (pretty) {
-    printf("[%d:%d] Send '%d' to process %d with tag %d\n", send.clock, myID,
-           send.message, where, tag);
+  send[1] = message;
+  send[2] = mem_clock;
+  MPI_Send(&send, 3, MPI_INT, where, tag, MPI_COMM_WORLD);
+  if (raw_s_r) {
+    printf("[%d:%d] Send '%d' and '%d' to process %d with tag %d\n", send[0],
+           myID, send[1], send[2], where, tag);
   }
   if (csv) {
     FILE *fp;
@@ -35,24 +37,24 @@ int mySend(int &lclock, int message, int where, int tag, int myID) {
       printf("Can't open output file %s!\n", filename);
       exit(EXIT_FAILURE);
     } else {
-      fprintf(fp, "%d,%d,%c,%d,%d,%d\n", send.clock, myID, 'S', send.message,
-              where, tag);
+      fprintf(fp, "%d,%d,%c,%d,%d,%d,%d\n", send[0], myID, 'S', send[1],
+              send[2], where, tag);
     }
   }
 }
 
-int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status,
+int myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
            int myID) {
-  MPI_Recv(&recv, 1, MPI_2INT, from, tag, MPI_COMM_WORLD, &status);
+  MPI_Recv(recv, 3, MPI_INT, from, tag, MPI_COMM_WORLD, &status);
   pthread_mutex_lock(&recv_clock_mutex);
-  if (lclock < recv.clock) {
-    lclock = recv.clock + 1;
+  if (lclock < recv[0]) {
+    lclock = recv[0] + 1;
   } else {
     lclock = lclock + 1;
   }
-  if (pretty) {
-    printf("[%d:%d] Receive '%d' from process %d with tag %d\n", lclock, myID,
-           recv.message, status.MPI_SOURCE, status.MPI_TAG);
+  if (raw_s_r) {
+    printf("[%d:%d] Receive '%d' and '%d' from process %d with tag %d\n",
+           lclock, myID, recv[1], recv[2], status.MPI_SOURCE, status.MPI_TAG);
   }
   if (csv) {
     FILE *fp;
@@ -61,17 +63,18 @@ int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status,
       printf("Can't open output file %s!\n", filename);
       exit(EXIT_FAILURE);
     } else {
-      fprintf(fp, "%d,%d,%c,%d,%d,%d\n", lclock, myID, 'R', recv.message,
+      fprintf(fp, "%d,%d,%c,%d,%d,%d,%d\n", lclock, myID, 'R', recv[1], recv[2],
               status.MPI_SOURCE, status.MPI_TAG);
     }
   }
   pthread_mutex_unlock(&recv_clock_mutex);
 }
 
-int myBroadCast(int &lclock, int message, int tag, int myID, int sizePool) {
+int myBroadCast(int &lclock, int message, int mem_clock, int tag, int myID,
+                int sizePool) {
   for (int i = 0; i < sizePool; i++) {
     if (i != myID) {
-      mySend(lclock, message, i, tag, myID);
+      mySend(lclock, message, mem_clock, i, tag, myID);
     }
   }
 }

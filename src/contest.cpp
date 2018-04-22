@@ -10,12 +10,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <vector>
+#include "crit.h"
 #include "error_code.h"
 #include "packet_communication.h"
 #include "tags.h"
+#include "utils.h"
 
-int pretty = true;
-int csv = true;
+int raw_s_r = false;
+int csv = false;
 int debug = false;
 
 // function definitions
@@ -25,6 +28,7 @@ void enable_thread(int *argc, char ***argv);
 // global variable
 int rank;        // id of this thread
 int lclock = 0;  // lamport clock
+std::vector<crit_sruct> *doctor_arr;
 
 // implementations
 int main(int argc, char *argv[]) {
@@ -46,21 +50,68 @@ int main(int argc, char *argv[]) {
 
   // initialize everything
   int size;
-
-  // MPI_Init(&argc, &argv);               /* starts MPI */
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
+  doctor_arr = new std::vector<crit_sruct>[size];
+
+  // synchronize
+  MPI_Barrier(MPI_COMM_WORLD);
   // starts proper compute
-  if (rank == 0) {
-    for (int i = 0; i < size; i++) {
-      mySend(lclock, i, i, TAG_END, rank);
-    }
+  if (rank == 0 or rank == 1) {
+    want_crit_sec(doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR, rank, size);
   }
 
+  // for receive all message (1 second)
+  usleep(1000000);
+  print_crit_section(doctor_arr[0], rank);
+  // send end compute and exit process
+  send_end_compute(lclock, rank, size);
   pthread_join(receive_thread, NULL);
   MPI_Finalize();
   return EXIT_SUCCESS;
+}
+
+void *receive_loop(void *ptr) {
+  bool is_compute = true;
+  while (is_compute) {
+    MPI_Status status;
+    int recv[3];
+    myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
+    switch (status.MPI_TAG) {
+      case TAG_END:
+        is_compute = false;
+        break;
+
+      case TAG_WANT_DOCTOR:
+        receive_want_doctor(doctor_arr[recv[1]], recv, status.MPI_SOURCE, rank);
+        break;
+
+      case TAG_ACK_DOCTOR:
+        receive_ack_doctor();
+        break;
+
+      case TAG_RLS_DOCTOR:
+        receive_rls_doctor();
+        break;
+
+      case TAG_WANT_SALON:
+        receive_want_salon();
+        break;
+
+      case TAG_ACK_SALON:
+        receive_ack_salon();
+        break;
+
+      case TAG_RLS_SALON:
+        receive_rls_salon();
+        break;
+
+      default:
+        printf("WRONG TAG %d", status.MPI_TAG);
+        exit(EXIT_FAILURE);
+    }
+  }
 }
 
 bool cli_parameters(int argc, char *argv[], int &L, int &S) {
@@ -102,16 +153,5 @@ void enable_thread(int *argc, char ***argv) {
     fprintf(stderr, "There is not enough support for threads - I'm leaving!\n");
     MPI_Finalize();
     exit(EXIT_FAILURE);
-  }
-}
-
-void *receive_loop(void *ptr) {
-  while (1) {
-    MPI_Status status;
-    packet_s recv;
-    myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
-    if (status.MPI_TAG == TAG_END) {
-      break;
-    }
   }
 }
