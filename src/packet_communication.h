@@ -9,12 +9,12 @@ extern int csv;
 // int send[3];
 // int recv[3];
 
-int mySend(int &lclock, int message, int mem_clock, int where, int tag,
-           int myID);
-int myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
-           int myID);
+void mySend(int &lclock, int message, int mem_clock, int where, int tag,
+            int myID);
+void myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
+            int myID);
 
-int myBroadCast(int &lclock, int message, int mem_clock, int tag, int myID,
-                int sizePool);
+void myBroadCast(int &lclock, int message, int mem_clock, int tag, int myID,
+                 int sizePool);
 
 #endif  // PACKET_COMMUNICATION_H

@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
   doctor_arr = new std::vector<crit_sruct>[size];
-  for (size_t i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
     doctor_mutex.push_back(tmp_mutex);
   }
@@ -118,6 +118,7 @@ void *receive_loop(void *ptr) {
         exit(EXIT_FAILURE);
     }
   }
+  return EXIT_SUCCESS;
 }
 
 bool cli_parameters(int argc, char *argv[], int &L, int &S) {

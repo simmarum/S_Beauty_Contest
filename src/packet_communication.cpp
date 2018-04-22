@@ -16,8 +16,8 @@ char filename[40];
 struct tm *timenow;
 time_t now = time(NULL);
 
-int mySend(int &lclock, int message, int mem_clock, int where, int tag,
-           int myID) {
+void mySend(int &lclock, int message, int mem_clock, int where, int tag,
+            int myID) {
   int send[3];
   pthread_mutex_lock(&send_clock_mutex);
   lclock += 1;
@@ -43,8 +43,8 @@ int mySend(int &lclock, int message, int mem_clock, int where, int tag,
   }
 }
 
-int myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
-           int myID) {
+void myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
+            int myID) {
   MPI_Recv(recv, 3, MPI_INT, from, tag, MPI_COMM_WORLD, &status);
   pthread_mutex_lock(&recv_clock_mutex);
   if (lclock < recv[0]) {
@@ -70,8 +70,8 @@ int myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
   pthread_mutex_unlock(&recv_clock_mutex);
 }
 
-int myBroadCast(int &lclock, int message, int mem_clock, int tag, int myID,
-                int sizePool) {
+void myBroadCast(int &lclock, int message, int mem_clock, int tag, int myID,
+                 int sizePool) {
   for (int i = 0; i < sizePool; i++) {
     if (i != myID) {
       mySend(lclock, message, mem_clock, i, tag, myID);
