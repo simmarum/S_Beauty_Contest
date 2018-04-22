@@ -15,7 +15,9 @@
 			"utility": "c",
 			"mpi.h": "c",
 			"stdio.h": "c",
-			"system_error": "cpp"
+			"system_error": "cpp",
+			"type_traits": "cpp",
+			"cstdlib": "cpp"
 		}
 	}
 }
