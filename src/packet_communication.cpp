@@ -11,7 +11,15 @@ int mySend(int &lclock, int message, int where, int tag) {
 
 int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status) {
   MPI_Recv(&recv, 1, MPI_2INT, from, tag, MPI_COMM_WORLD, &status);
-  if (lclock < recv.clock){
+  if (lclock < recv.clock) {
     lclock = recv.clock;
+  }
+}
+
+int myBroadCast(int &lclock, int message, int tag, int myID, int sizePool) {
+  for (int i = 0; i < sizePool; i++) {
+    if (i != myID) {
+      mySend(lclock, message, i, tag);
+    }
   }
 }

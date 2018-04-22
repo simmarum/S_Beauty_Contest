@@ -12,6 +12,8 @@ struct packet_s {
 };
 
 int mySend(int &lclock, int message, int where, int tag);
-int myRecv(int &lclock,packet_s &recv, int from, int tag, MPI_Status &status);
+int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status);
+
+int myBroadCast(int &lclock, int message, int tag, int myID, int sizePool);
 
 #endif  // PACKET_COMMUNICATION_H
