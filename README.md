@@ -28,6 +28,9 @@ Verify installation ny execute
 ```bash
 mpicc --version
 ``` 
+```bash
+mpic++ --version
+``` 
 
 # To run program (if no error occurs)
 ```bash
