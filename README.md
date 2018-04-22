@@ -12,11 +12,27 @@ Pasztetowo zdecydowało się raz na zawsze skończyć z krzywdzącymi stereotypa
 **N** menadżerów spontanicznie decyduje, że będzie w tym roku obsługiwać pewną liczbę modelek. Następnie menadżerowie ubiegają się o dostęp do jednego z lekarzy wyznaczonych przez gminę (lekarzy jest **L** i są rozróżnialni). Badania lekarskie są konieczne od czasu, gdy jacyś dowcipnisie wystawili w konkursie upudrowaną świnię w bikini, która zdobyła tytuł wicemiss Pasztetowa. Po zdobyciu opinii lekarza, menadżerowie rezerwują odpowiednią liczbę miejsc w salonie kosmetycznym (salon ma pojemność **S**). Następnie zgłaszają gotowość. Gdy wszyscy menadżerowie są gotowi, rozpoczyna się konkurs (poza kontrolą programu).
 
 # Require a MPI
-`sudo apt-get install openmpi-bin openmpi-common openmpi-doc libopenmpi-dev openssh-client openssh-server`  
-Verify installation ny execute `mpicc --version` 
+```diff
+- sudo apt-get install openmpi-bin openmpi-common openmpi-doc libopenmpi-dev openssh-client openssh-server
++ sudo apt-get install libcr-dev mpich mpich-doc
+```
+If you install **`openmpi`** please remove it (**it not works multithreads aplications...**)  
+```bash
+sudo apt-get remove openmpi-bin openmpi-common openmpi-doc libopenmpi-dev
+```  
+And install instead `mpich`  
+```bash
+sudo apt-get install libcr-dev mpich mpich-doc
+```
+Verify installation ny execute
+```bash
+mpicc --version
+``` 
 
 # To run program (if no error occurs)
-`bash run.sh`
+```bash
+sh run.sh`
+```
 
 # Project editor
 Visual Studio Code 
