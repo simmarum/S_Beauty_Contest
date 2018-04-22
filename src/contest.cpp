@@ -14,7 +14,7 @@
 #include "packet_communication.h"
 #include "tags.h"
 
-int pretty = true;
+int raw_s_r = true;
 int csv = true;
 int debug = false;
 

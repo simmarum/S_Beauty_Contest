@@ -24,7 +24,7 @@ int mySend(int &lclock, int message, int where, int tag, int myID) {
   pthread_mutex_unlock(&send_clock_mutex);
   send.message = message;
   MPI_Send(&send, 1, MPI_2INT, where, tag, MPI_COMM_WORLD);
-  if (pretty) {
+  if (raw_s_r) {
     printf("[%d:%d] Send '%d' to process %d with tag %d\n", send.clock, myID,
            send.message, where, tag);
   }
@@ -50,7 +50,7 @@ int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status,
   } else {
     lclock = lclock + 1;
   }
-  if (pretty) {
+  if (raw_s_r) {
     printf("[%d:%d] Receive '%d' from process %d with tag %d\n", lclock, myID,
            recv.message, status.MPI_SOURCE, status.MPI_TAG);
   }

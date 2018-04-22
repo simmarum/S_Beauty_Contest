@@ -2,7 +2,7 @@
 #define PACKET_COMMUNICATION_H
 
 #include <mpi.h>
-extern int pretty;
+extern int raw_s_r;
 extern int csv;
 // Struct for send message
 // DON'T change because it corespond to MPI_2INT which require struct with only
