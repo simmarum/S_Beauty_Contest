@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 extern int pretty;
-
+extern int csv;
 // Struct for send message
 // DON'T change because it corespond to MPI_2INT which require struct with only
 // 2 int!
