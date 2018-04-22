@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   doctor_arr = new std::vector<crit_sruct>[size];
 
   // starts proper compute
-  if (rank == 0) {
+  if (rank == 0 or rank == 1) {
     want_crit_sec(doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR, rank, size);
   }
 
