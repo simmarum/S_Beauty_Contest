@@ -15,6 +15,7 @@
 #include "error_code.h"
 #include "packet_communication.h"
 #include "tags.h"
+#include "utils.h"
 
 int raw_s_r = true;
 int csv = true;
@@ -56,11 +57,11 @@ int main(int argc, char *argv[]) {
 
   // starts proper compute
   if (rank == 0) {
-    for (int i = 0; i < size; i++) {
-      mySend(lclock, i, i, TAG_END, rank);
-    }
+    want_crit_sec(doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR, rank, size);
   }
 
+  // send end compute and exit process
+  send_end_compute(lclock, rank, size);
   pthread_join(receive_thread, NULL);
   MPI_Finalize();
   return EXIT_SUCCESS;
