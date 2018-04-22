@@ -77,18 +77,31 @@ void *receive_loop(void *ptr) {
       case TAG_END:
         is_compute = false;
         break;
+
       case TAG_WANT_DOCTOR:
+        receive_want_doctor();
         break;
+
       case TAG_ACK_DOCTOR:
+        receive_ack_doctor();
         break;
+
       case TAG_RLS_DOCTOR:
+        receive_rls_doctor();
         break;
+
       case TAG_WANT_SALON:
+        receive_want_salon();
         break;
+
       case TAG_ACK_SALON:
+        receive_ack_salon();
         break;
+
       case TAG_RLS_SALON:
+        receive_rls_salon();
         break;
+
       default:
         printf("WRONG TAG %d", status.MPI_TAG);
         exit(EXIT_FAILURE);
