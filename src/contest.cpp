@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
   int lclock = 0;  // lamport clock
 
   if (!cli_parameters(argc, argv, L, S)) {
+    printf("WRONG PARAMETERS %d %d\n", L, S);
     return ERROR_WRONG_PARAMETERS;
   }
 
@@ -27,21 +28,16 @@ int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);               /* starts MPI */
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
-  printf("Hello world from processs %d of %d\n", rank, size);
+
   if (rank == 0) {
-    for (int i = 0; i < 10; i++) {
-      mySend(lclock, i, 1, 100);
-      printf("Rank %d: sent structure\n", rank);
-    }
+    myBroadCast(lclock, 23, 100, rank, size);
   }
-  if (rank == 1) {
+  if (rank != 0) {
     MPI_Status status;
     packet_s recv;
-    for (int i = 0; i < 10; i++) {
-      myRecv(lclock, recv, 0, 100, status);
-      printf("Rank %d: Received from %d: clock = %d message = %d\n", rank,
-             status.MPI_SOURCE, recv.clock, recv.message);
-    }
+    myRecv(lclock, recv, 0, 100, status);
+    printf("Rank %d: Received from %d: clock = %d message = %d\n", rank,
+           status.MPI_SOURCE, recv.clock, recv.message);
   }
 
   MPI_Finalize();
