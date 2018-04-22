@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <vector>
+#include "crit.h"
 #include "error_code.h"
 #include "packet_communication.h"
 #include "tags.h"
@@ -25,6 +27,7 @@ void enable_thread(int *argc, char ***argv);
 // global variable
 int rank;        // id of this thread
 int lclock = 0;  // lamport clock
+std::vector<crit_sruct> *doctor_arr;
 
 // implementations
 int main(int argc, char *argv[]) {
@@ -46,10 +49,10 @@ int main(int argc, char *argv[]) {
 
   // initialize everything
   int size;
-
-  // MPI_Init(&argc, &argv);               /* starts MPI */
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
+
+  doctor_arr = new std::vector<crit_sruct>[size];
 
   // starts proper compute
   if (rank == 0) {
@@ -61,6 +64,35 @@ int main(int argc, char *argv[]) {
   pthread_join(receive_thread, NULL);
   MPI_Finalize();
   return EXIT_SUCCESS;
+}
+
+void *receive_loop(void *ptr) {
+  bool is_compute = true;
+  while (is_compute) {
+    MPI_Status status;
+    packet_s recv;
+    myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
+    switch (status.MPI_TAG) {
+      case TAG_END:
+        is_compute = false;
+        break;
+      case TAG_WANT_DOCTOR:
+        break;
+      case TAG_ACK_DOCTOR:
+        break;
+      case TAG_RLS_DOCTOR:
+        break;
+      case TAG_WANT_SALON:
+        break;
+      case TAG_ACK_SALON:
+        break;
+      case TAG_RLS_SALON:
+        break;
+      default:
+        printf("WRONG TAG %d", status.MPI_TAG);
+        exit(EXIT_FAILURE);
+    }
+  }
 }
 
 bool cli_parameters(int argc, char *argv[], int &L, int &S) {
@@ -102,16 +134,5 @@ void enable_thread(int *argc, char ***argv) {
     fprintf(stderr, "There is not enough support for threads - I'm leaving!\n");
     MPI_Finalize();
     exit(EXIT_FAILURE);
-  }
-}
-
-void *receive_loop(void *ptr) {
-  while (1) {
-    MPI_Status status;
-    packet_s recv;
-    myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
-    if (status.MPI_TAG == TAG_END) {
-      break;
-    }
   }
 }
