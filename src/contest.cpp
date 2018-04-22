@@ -25,10 +25,12 @@ int debug = false;
 bool cli_parameters(int argc, char *argv[], int &L, int &S);
 void *receive_loop(void *ptr);
 void enable_thread(int *argc, char ***argv);
+
 // global variable
 int rank;        // id of this thread
 int lclock = 0;  // lamport clock
 std::vector<crit_sruct> *doctor_arr;
+std::vector<pthread_mutex_t> doctor_mutex;
 
 // implementations
 int main(int argc, char *argv[]) {
@@ -54,16 +56,19 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
   doctor_arr = new std::vector<crit_sruct>[size];
-
+  for (size_t i = 0; i < size; i++) {
+    pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
+    doctor_mutex.push_back(tmp_mutex);
+  }
   // synchronize
   MPI_Barrier(MPI_COMM_WORLD);
   // starts proper compute
   if (rank == 0 or rank == 1) {
-    want_crit_sec(doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR, rank, size);
+    want_crit_sec(doctor_mutex[0], doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR,
+                  rank, size);
   }
-
-  // for receive all message (1 second)
-  usleep(1000000);
+  // for receive all message (0.5 second)
+  usleep(500000);
   print_crit_section(doctor_arr[0], rank);
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
@@ -84,7 +89,8 @@ void *receive_loop(void *ptr) {
         break;
 
       case TAG_WANT_DOCTOR:
-        receive_want_doctor(doctor_arr[recv[1]], recv, status.MPI_SOURCE, rank);
+        receive_want_doctor(doctor_mutex[recv[1]], doctor_arr[recv[1]], recv,
+                            status.MPI_SOURCE, rank);
         break;
 
       case TAG_ACK_DOCTOR:
