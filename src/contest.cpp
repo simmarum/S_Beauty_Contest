@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 
   // check parameters
   if (!cli_parameters(argc, argv, L, S)) {
+    printf("WRONG PARAMETERS %d %d\n", L, S);
     return ERROR_WRONG_PARAMETERS;
   }
 
@@ -44,14 +45,9 @@ int main(int argc, char *argv[]) {
   // MPI_Init(&argc, &argv);               /* starts MPI */
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
-  printf("Hello world from processs %d of %d\n", rank, size);
 
   // starts proper compute
   if (rank == 0) {
-    for (int i = 1; i < size; i++) {
-      mySend(lclock, 1, i, 100);
-      printf("Rank %d: sent structure to %d\n", rank, i);
-    }
     for (int i = 0; i < size; i++) {
       mySend(lclock, 5, i, 100);
       printf("Rank %d: sent structure to %d\n", rank, i);
