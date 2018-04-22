@@ -17,8 +17,8 @@
 #include "tags.h"
 #include "utils.h"
 
-int raw_s_r = true;
-int csv = true;
+int raw_s_r = false;
+int csv = false;
 int debug = false;
 
 // function definitions
@@ -55,11 +55,16 @@ int main(int argc, char *argv[]) {
 
   doctor_arr = new std::vector<crit_sruct>[size];
 
+  // synchronize
+  MPI_Barrier(MPI_COMM_WORLD);
   // starts proper compute
   if (rank == 0 or rank == 1) {
     want_crit_sec(doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR, rank, size);
   }
 
+  // for receive all message (1 second)
+  usleep(1000000);
+  print_crit_section(doctor_arr[0], rank);
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
   pthread_join(receive_thread, NULL);
@@ -71,7 +76,7 @@ void *receive_loop(void *ptr) {
   bool is_compute = true;
   while (is_compute) {
     MPI_Status status;
-    packet_s recv;
+    int recv[3];
     myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
     switch (status.MPI_TAG) {
       case TAG_END:
@@ -79,7 +84,7 @@ void *receive_loop(void *ptr) {
         break;
 
       case TAG_WANT_DOCTOR:
-        receive_want_doctor();
+        receive_want_doctor(doctor_arr[recv[1]], recv, status.MPI_SOURCE, rank);
         break;
 
       case TAG_ACK_DOCTOR:
