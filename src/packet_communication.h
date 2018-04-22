@@ -2,6 +2,7 @@
 #define PACKET_COMMUNICATION_H
 
 #include <mpi.h>
+extern int pretty;
 
 // Struct for send message
 // DON'T change because it corespond to MPI_2INT which require struct with only
@@ -11,8 +12,9 @@ struct packet_s {
   int message;
 };
 
-int mySend(int &lclock, int message, int where, int tag);
-int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status);
+int mySend(int &lclock, int message, int where, int tag, int myID);
+int myRecv(int &lclock, packet_s &recv, int from, int tag, MPI_Status &status,
+           int myID);
 
 int myBroadCast(int &lclock, int message, int tag, int myID, int sizePool);
 

@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include "error_code.h"
 #include "packet_communication.h"
+#include "tags.h"
+
+int pretty = true;
+int debug = false;
 
 // function definitions
 bool cli_parameters(int argc, char *argv[], int &L, int &S);
@@ -49,13 +53,11 @@ int main(int argc, char *argv[]) {
   // starts proper compute
   if (rank == 0) {
     for (int i = 0; i < size; i++) {
-      mySend(lclock, 5, i, 100);
-      printf("Rank %d: sent structure to %d\n", rank, i);
+      mySend(lclock, i, i, TAG_END, rank);
     }
   }
 
   pthread_join(receive_thread, NULL);
-  printf("END %d\n", rank);
   MPI_Finalize();
   return EXIT_SUCCESS;
 }
@@ -76,22 +78,24 @@ bool cli_parameters(int argc, char *argv[], int &L, int &S) {
 void enable_thread(int *argc, char ***argv) {
   int provided = 0;
   MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &provided);
-  switch (provided) {
-    case MPI_THREAD_SINGLE:
-      printf("thread level supported: MPI_THREAD_SINGLE\n");
-      break;
-    case MPI_THREAD_FUNNELED:
-      printf("thread level supported: MPI_THREAD_FUNNELED\n");
-      break;
-    case MPI_THREAD_SERIALIZED:
-      printf("thread level supported: MPI_THREAD_SERIALIZED\n");
-      break;
-    case MPI_THREAD_MULTIPLE:
-      printf("thread level supported: MPI_THREAD_MULTIPLE\n");
-      break;
-    default:
-      printf("thread level supported: UNRECOGNIZED\n");
-      exit(EXIT_FAILURE);
+  if (debug) {
+    switch (provided) {
+      case MPI_THREAD_SINGLE:
+        printf("thread level supported: MPI_THREAD_SINGLE\n");
+        break;
+      case MPI_THREAD_FUNNELED:
+        printf("thread level supported: MPI_THREAD_FUNNELED\n");
+        break;
+      case MPI_THREAD_SERIALIZED:
+        printf("thread level supported: MPI_THREAD_SERIALIZED\n");
+        break;
+      case MPI_THREAD_MULTIPLE:
+        printf("thread level supported: MPI_THREAD_MULTIPLE\n");
+        break;
+      default:
+        printf("thread level supported: UNRECOGNIZED\n");
+        exit(EXIT_FAILURE);
+    }
   }
   if (provided != MPI_THREAD_MULTIPLE) {
     fprintf(stderr, "There is not enough support for threads - I'm leaving!\n");
@@ -104,10 +108,8 @@ void *receive_loop(void *ptr) {
   while (1) {
     MPI_Status status;
     packet_s recv;
-    myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status);
-    printf("Rank %d: Received from %d: clock = %d message = %d\n", rank,
-           status.MPI_SOURCE, recv.clock, recv.message);
-    if (recv.message == 5) {
+    myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
+    if (status.MPI_TAG == TAG_END) {
       break;
     }
   }
