@@ -1,0 +1,38 @@
+graph TD
+A[Init process P_0] -->B[Synchronize with other threads]
+
+B -->|Want doctor|C1(P_1)
+B -->|Want doctor|CX(...)
+B -->|Want doctor|C2(P_N)
+
+C1 --> |ACK doctor|D[Entry doctor]
+CX --> |ACK doctor|D[Entry doctor]
+C2 --> |ACK doctor|D[Entry doctor]
+
+D -->|RLS doctor|E1(P_1)
+D -->|RLS doctor|EX(...)
+D -->|RLS doctor|E2(P_N)
+
+D --> Q1{Send all RLS?}
+
+Q1 -->|Want salon|G1(P_1)
+Q1 -->|Want salon|GX(...)
+Q1 -->|Want salon|G2(P_N)
+
+G1 --> |ACK salon|H[Entry salon]
+GX --> |ACK salon|H[Entry salon]
+G2 --> |ACK salon|H[Entry salon]
+
+H --> Q2{Send all RLS?}
+
+Q2 --> |Send ready/end|K1(P_1)
+Q2 --> |Send ready/end|KX(...)
+Q2 --> |Send ready/end|K2(P_N)
+
+H -->|RLS salon|I1(P_1)
+H -->|RLS salon|IX(...)
+H -->|RLS salon|I2(P_N)
+
+Q2 --> Q3{Receive others END?}
+
+Q3 -->  M[END process P_0]
