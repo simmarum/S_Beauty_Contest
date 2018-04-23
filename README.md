@@ -40,3 +40,7 @@ sh run.sh`
 # Project editor
 Visual Studio Code 
 https://code.visualstudio.com/download
+
+# Idea of algorithm
+![Image of idea of algorithm](https://raw.githubusercontent.com/simmarum/S_Beauty_Contest/master/idea_of_algorithm/IoA.svg?sanitize=true)
+<img src="https://raw.githubusercontent.com/simmarum/S_Beauty_Contest/master/idea_of_algorithm/IoA.svg?sanitize=true">
