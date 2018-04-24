@@ -34,7 +34,7 @@ mpic++ --version
 
 # To run program (if no error occurs)
 ```bash
-sh run.sh`
+sh run.sh
 ```
 
 # Project editor
