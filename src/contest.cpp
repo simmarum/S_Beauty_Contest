@@ -36,6 +36,7 @@ std::vector<pthread_mutex_t> doctor_mutex;
 int main(int argc, char *argv[]) {
   int L = 0;  // number of doctor
   int S = 0;  // capacity of salon
+  int M = 0;  // number of models
 
   // check parameters
   if (!cli_parameters(argc, argv, L, S)) {
@@ -55,6 +56,11 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
+  srand(rank + (int)time(0));  // random seed
+  // rand from 1 to capacity of Salon
+  M = (int)((rand() / (RAND_MAX + 1.0)) * S) + 1;
+
+  // create doctor critical section mutex
   doctor_arr = new std::vector<crit_sruct>[size];
   for (int i = 0; i < size; i++) {
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -62,6 +68,7 @@ int main(int argc, char *argv[]) {
   }
   // synchronize
   MPI_Barrier(MPI_COMM_WORLD);
+
   // starts proper compute
   if (rank == 0 or rank == 1) {
     want_crit_sec(doctor_mutex[0], doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR,
