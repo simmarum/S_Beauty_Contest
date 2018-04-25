@@ -77,13 +77,13 @@ int main(int argc, char *argv[]) {
   // starts proper compute
 
   // want critical section for doctor
-  int which_doctor = rank % L;
+  int which_doctor = 0;
   want_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                 which_doctor, TAG_WANT_DOCTOR, rank, size);
 
   // for receive all message (0.5 second)
   usleep(500000);
-  print_crit_section(doctor_arr[0], rank);
+  // print_crit_section(doctor_arr[0], rank);
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
   pthread_join(receive_thread, NULL);
@@ -97,6 +97,9 @@ void *receive_loop(void *ptr) {
     MPI_Status status;
     int recv[3];
     myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
+
+    int position[2];
+
     switch (status.MPI_TAG) {
       case TAG_END:
         is_compute = false;
@@ -105,6 +108,9 @@ void *receive_loop(void *ptr) {
       case TAG_WANT_DOCTOR:
         receive_want_doctor(doctor_mutex[recv[1]], doctor_arr[recv[1]], recv,
                             status.MPI_SOURCE, rank);
+        find_me_crit_sec(doctor_mutex[recv[1]], doctor_arr[recv[1]], rank,
+                         status.MPI_SOURCE, position);
+        printf("POS: %d & %d- %d\n", position[0], position[1], rank);
         break;
 
       case TAG_ACK_DOCTOR:

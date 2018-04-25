@@ -19,5 +19,8 @@ void receive_want_salon();
 void receive_ack_salon();
 void receive_rls_salon();
 
+void find_me_crit_sec(pthread_mutex_t &crit_mut,
+                      std::vector<crit_sruct> &doct_vec, int myID, int youID,
+                      int position[]);
 void print_crit_section(std::vector<crit_sruct> &c_vec, int myID);
 #endif  // UTILS_H
