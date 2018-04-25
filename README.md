@@ -34,10 +34,10 @@ mpic++ --version
 
 # To run program (if no error occurs)
 ```bash
-sh compile_run.sh N L S [hostfile]
+bash compile_run.sh N L S [hostfile]
 ```
 ```bash
-sh run.sh N L S [hostfile]
+bash run.sh N L S [hostfile]
 ```
 
 # Project editor
