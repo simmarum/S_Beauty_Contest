@@ -27,8 +27,11 @@ void *receive_loop(void *ptr);
 void enable_thread(int *argc, char ***argv);
 
 // global variable
-int rank;        // id of this thread
+int rank = 0;    // id of this thread
 int lclock = 0;  // lamport clock
+int size = 0;    // number of processes
+
+int *doctor_ack;
 std::vector<crit_sruct> *doctor_arr;
 std::vector<pthread_mutex_t> doctor_mutex;
 
@@ -52,7 +55,7 @@ int main(int argc, char *argv[]) {
   pthread_create(&receive_thread, NULL, receive_loop, 0);
 
   // initialize everything
-  int size;
+
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
@@ -60,9 +63,11 @@ int main(int argc, char *argv[]) {
   // rand from 1 to capacity of Salon
   M = (int)((rand() / (RAND_MAX + 1.0)) * S) + 1;
 
-  // create doctor critical section mutex
+  // create doctor critical section mutex and ack array
+  doctor_ack = new int[size];
   doctor_arr = new std::vector<crit_sruct>[size];
   for (int i = 0; i < size; i++) {
+    doctor_ack[i] = 0;
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
     doctor_mutex.push_back(tmp_mutex);
   }
