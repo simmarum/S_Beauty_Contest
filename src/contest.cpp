@@ -17,7 +17,7 @@
 #include "tags.h"
 #include "utils.h"
 
-int raw_s_r = false;
+int raw_s_r = true;
 int csv = false;
 int debug = false;
 
@@ -70,10 +70,12 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
 
   // starts proper compute
-  if (rank == 0 or rank == 1) {
-    want_crit_sec(doctor_mutex[0], doctor_arr[0], lclock, 0, TAG_WANT_DOCTOR,
-                  rank, size);
-  }
+
+  // want critical section for doctor
+  int which_doctor = rank % L;
+  want_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
+                which_doctor, TAG_WANT_DOCTOR, rank, size);
+
   // for receive all message (0.5 second)
   usleep(500000);
   print_crit_section(doctor_arr[0], rank);

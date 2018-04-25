@@ -11,7 +11,7 @@ all: clean $(OUTPUT)
 
 # The output depends on sources and headers
 $(OUTPUT): $(SOURCES) $(HEADERS)
-	mpic++ -Wall -pthread -o $(OUTPUT) $(SOURCES)
+	mpic++ -Wall -pthread -std=c++11 -o $(OUTPUT) $(SOURCES)
 
 clean:
 	$(RM) $(OUTPUT)

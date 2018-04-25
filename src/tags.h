@@ -11,4 +11,8 @@
 #define TAG_ACK_SALON 566
 #define TAG_RLS_SALON 577
 
+#include <map>
+#include <string>
+extern std::map<int, std::string> mymap;
+extern int a;
 #endif  // TAGS_H
