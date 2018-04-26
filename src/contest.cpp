@@ -9,6 +9,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
 #include "crit.h"
@@ -23,15 +25,17 @@ int debug = false;
 
 // function definitions
 bool cli_parameters(int argc, char *argv[], int &L, int &S);
-void *receive_loop(void *ptr);
 void enable_thread(int *argc, char ***argv);
+
+void *receive_loop(void *ptr);
+void *ack_doctor_fun(void *args);
 
 // global variable
 int rank = 0;    // id of this thread
 int lclock = 0;  // lamport clock
 int size = 0;    // number of processes
 
-int *doctor_ack;
+int doctor_ack;
 std::vector<crit_sruct> *doctor_arr;
 std::vector<pthread_mutex_t> doctor_mutex;
 
@@ -64,10 +68,9 @@ int main(int argc, char *argv[]) {
   M = (int)((rand() / (RAND_MAX + 1.0)) * S) + 1;
 
   // create doctor critical section mutex and ack array
-  doctor_ack = new int[size];
+  doctor_ack = 0;
   doctor_arr = new std::vector<crit_sruct>[size];
   for (int i = 0; i < size; i++) {
-    doctor_ack[i] = 0;
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
     doctor_mutex.push_back(tmp_mutex);
   }
@@ -82,7 +85,7 @@ int main(int argc, char *argv[]) {
                 which_doctor, TAG_WANT_DOCTOR, rank, size);
 
   // for receive all message (0.5 second)
-  usleep(500000);
+  usleep(1000000);
   // print_crit_section(doctor_arr[0], rank);
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
@@ -111,9 +114,19 @@ void *receive_loop(void *ptr) {
         find_me_crit_sec(doctor_mutex[recv[1]], doctor_arr[recv[1]], rank,
                          status.MPI_SOURCE, position);
         printf("POS: %d & %d- %d\n", position[0], position[1], rank);
+
+        if (position[0] > position[1]) {
+          pthread_t ack_doctor_thread;
+          pthread_create(&ack_doctor_thread, NULL, ack_doctor_fun,
+                         &status.MPI_SOURCE);
+        }
         break;
 
       case TAG_ACK_DOCTOR:
+        doctor_ack++;
+        if (doctor_ack == size - 1) {
+          printf("*****************************************CRIT SECTION!!!!\n");
+        }
         receive_ack_doctor();
         break;
 
@@ -138,6 +151,12 @@ void *receive_loop(void *ptr) {
         exit(EXIT_FAILURE);
     }
   }
+  return EXIT_SUCCESS;
+}
+
+void *ack_doctor_fun(void *args) {
+  int to = *(int *)args;
+  mySend(lclock, -1, -1, to, TAG_ACK_DOCTOR, rank);
   return EXIT_SUCCESS;
 }
 
