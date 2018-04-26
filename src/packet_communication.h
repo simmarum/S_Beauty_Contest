@@ -2,10 +2,12 @@
 #define PACKET_COMMUNICATION_H
 
 #include <mpi.h>
+
 extern int raw_s_r;
 extern int csv;
 
 // structure to send and receive is array of 3 int
+// [lamport_clock, message, memory_clock]
 // int send[3];
 // int recv[3];
 

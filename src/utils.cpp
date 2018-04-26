@@ -17,7 +17,14 @@ void receive_want_doctor(pthread_mutex_t &crit_mut,
   pthread_mutex_unlock(&crit_mut);
 };
 void receive_ack_doctor(){};
-void receive_rls_doctor(){};
+void receive_rls_doctor(pthread_mutex_t &crit_mut,
+                        std::vector<crit_sruct> &doct_vec, int from, int myID,
+                        int &doct_ack) {
+  pthread_mutex_lock(&crit_mut);
+  doct_ack++;
+  remove_from_crit_vec(doct_vec, from);
+  pthread_mutex_unlock(&crit_mut);
+};
 
 void receive_want_salon(){};
 void receive_ack_salon(){};
@@ -37,6 +44,15 @@ void find_me_crit_sec(pthread_mutex_t &crit_mut,
       position[1] = i;
     }
     pthread_mutex_unlock(&crit_mut);
+  }
+}
+
+void remove_from_crit_vec(std::vector<crit_sruct> &crit_vec, int myID) {
+  for (size_t i = 0; i < crit_vec.size(); i++) {
+    if (crit_vec[i].proces_id == myID) {
+      crit_vec.erase(crit_vec.begin() + i);
+      break;
+    }
   }
 }
 void print_crit_section(std::vector<crit_sruct> &c_vec, int myID) {

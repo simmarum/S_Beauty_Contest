@@ -1,4 +1,5 @@
 #include "crit.h"
+#include "utils.h"
 
 bool compare_crit_struct(const crit_sruct &a, const crit_sruct &b) {
   if (a.clock < b.clock) {
@@ -35,12 +36,7 @@ void want_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
 void rls_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
                   int &lclock, int message, int tag, int myID, int sizePool) {
   pthread_mutex_lock(&crit_mut);
-  for (size_t i = 0; i < crit_vec.size(); i++) {
-    if (crit_vec[i].proces_id == myID) {
-      crit_vec.erase(crit_vec.begin() + i);
-      break;
-    }
-  }
+  remove_from_crit_vec(crit_vec, myID);
   pthread_mutex_unlock(&crit_mut);
 
   myBroadCast(lclock, message, -1, tag, myID, sizePool);

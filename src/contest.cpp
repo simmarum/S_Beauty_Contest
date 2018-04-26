@@ -24,6 +24,10 @@ int raw_s_r = true;
 int csv = false;
 int debug = false;
 
+pthread_mutex_t l_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_mutex_t send_clock_mutex;
+extern pthread_mutex_t recv_clock_mutex;
+
 // function definitions
 bool cli_parameters(int argc, char *argv[], int &L, int &S);
 void enable_thread(int *argc, char ***argv);
@@ -41,6 +45,7 @@ std::atomic<bool> isDoctorFree(false);
 int doctor_ack;
 std::vector<crit_sruct> *doctor_arr;
 std::vector<pthread_mutex_t> doctor_mutex;
+int *doctor_ack_tab;
 
 // implementations
 int main(int argc, char *argv[]) {
@@ -67,13 +72,16 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
   srand(rank + (int)time(0));  // random seed
-  // rand from 1 to capacity of Salon
-  M = (int)((rand() / (RAND_MAX + 1.0)) * S) + 1;
+                               // rand from 1 to capacity of Salon
+
+  M = 1 + rand() / (RAND_MAX / (S - 1 + 1) + 1);
 
   // create doctor critical section mutex and ack array
   doctor_ack = 0;
+  doctor_ack_tab = new int[size];
   doctor_arr = new std::vector<crit_sruct>[size];
   for (int i = 0; i < size; i++) {
+    doctor_ack_tab[i] = i;
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
     doctor_mutex.push_back(tmp_mutex);
   }
@@ -90,10 +98,12 @@ int main(int argc, char *argv[]) {
   while (!isDoctorFree) {
   }
   // critical section
-  int good_models = (int)((rand() / (RAND_MAX + 1.0)) * S);
-  printf("<%d> POSITIVE: %d/%d\n", rank, good_models, M);
+  int good_models = 1 + rand() / (RAND_MAX / (M - 1 + 1) + 1);
+  pthread_mutex_lock(&l_clock_mutex);
+  printf("[%d:%d] GOOD MODELS: %d/%d\n", lclock, rank, good_models, M);
+  pthread_mutex_unlock(&l_clock_mutex);
+
   doctor_ack = 0;
-  isDoctorFree = false;
   // rls docor
   rls_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                which_doctor, TAG_RLS_DOCTOR, rank, size);
@@ -127,27 +137,32 @@ void *receive_loop(void *ptr) {
                             status.MPI_SOURCE, rank);
         find_me_crit_sec(doctor_mutex[recv[1]], doctor_arr[recv[1]], rank,
                          status.MPI_SOURCE, position);
-        printf("<%d:%d> POS: %d - %d\n", rank, status.MPI_SOURCE, position[0],
-               position[1]);
 
         if (position[0] > position[1]) {
-          int to_who = status.MPI_SOURCE;
-          pthread_t ack_doctor_thread;
-          pthread_create(&ack_doctor_thread, NULL, ack_doctor_fun, &to_who);
-        }
+          printf("&& %d %d\n", rank, status.MPI_SOURCE);
 
+          pthread_t ack_doctor_thread;
+          pthread_create(&ack_doctor_thread, NULL, ack_doctor_fun,
+                         &doctor_ack_tab[status.MPI_SOURCE]);
+        }
         break;
 
       case TAG_ACK_DOCTOR:
         doctor_ack++;
         if (doctor_ack == size - 1) {
           isDoctorFree = true;
-          print_crit_section(doctor_arr[0], rank);
         }
         break;
 
       case TAG_RLS_DOCTOR:
-        receive_rls_doctor();
+
+        receive_rls_doctor(doctor_mutex[recv[1]], doctor_arr[recv[1]],
+                           status.MPI_SOURCE, rank, doctor_ack);
+        if (!isDoctorFree) {
+          if (doctor_ack == size - 1) {
+            isDoctorFree = true;
+          }
+        }
         break;
 
       case TAG_WANT_SALON:
