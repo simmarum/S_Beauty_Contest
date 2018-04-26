@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
   // starts proper compute
 
   // want critical section for doctor
-  int which_doctor = 0;
+  int which_doctor = rank % L;
   want_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                 which_doctor, TAG_WANT_DOCTOR, rank, size);
 
@@ -102,17 +102,15 @@ int main(int argc, char *argv[]) {
   // critical section
   int good_models = 1 + rand() / (RAND_MAX / (M - 1 + 1) + 1);
   pthread_mutex_lock(&l_clock_mutex);
-  printf("[%d:%d] GOOD MODELS: %d/%d\n", lclock, rank, good_models, M);
+  printf("[%d:%d] GOOD MODELS: %d/%d from %d doctor\n", lclock, rank,
+         good_models, M, which_doctor);
   pthread_mutex_unlock(&l_clock_mutex);
-
   doctor_ack = 0;
+
   // rls docor
   rls_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                which_doctor, TAG_RLS_DOCTOR, rank, size);
 
-  // for receive all message (0.5 second)
-  usleep(1000000);
-  // print_crit_section(doctor_arr[0], rank);
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
 
