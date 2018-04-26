@@ -24,10 +24,24 @@ void want_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
   tmp_struct.clock = lclock;
   tmp_struct.proces_id = myID;
 
-  myBroadCast(lclock, message, tmp_struct.clock, tag, myID, sizePool);
-
   pthread_mutex_lock(&crit_mut);
   crit_vec.push_back(tmp_struct);
   sort_section(crit_vec);
   pthread_mutex_unlock(&crit_mut);
+
+  myBroadCast(lclock, message, tmp_struct.clock, tag, myID, sizePool);
+}
+
+void rls_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
+                  int &lclock, int message, int tag, int myID, int sizePool) {
+  pthread_mutex_lock(&crit_mut);
+  for (size_t i = 0; i < crit_vec.size(); i++) {
+    if (crit_vec[i].proces_id == myID) {
+      crit_vec.erase(crit_vec.begin() + i);
+      break;
+    }
+  }
+  pthread_mutex_unlock(&crit_mut);
+
+  myBroadCast(lclock, message, -1, tag, myID, sizePool);
 }

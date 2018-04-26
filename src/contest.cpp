@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <atomic>
 #include <vector>
 #include "crit.h"
 #include "error_code.h"
@@ -34,6 +35,8 @@ void *ack_doctor_fun(void *args);
 int rank = 0;    // id of this thread
 int lclock = 0;  // lamport clock
 int size = 0;    // number of processes
+
+std::atomic<bool> isDoctorFree(false);
 
 int doctor_ack;
 std::vector<crit_sruct> *doctor_arr;
@@ -84,6 +87,17 @@ int main(int argc, char *argv[]) {
   want_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                 which_doctor, TAG_WANT_DOCTOR, rank, size);
 
+  while (!isDoctorFree) {
+  }
+  // critical section
+  int good_models = (int)((rand() / (RAND_MAX + 1.0)) * S);
+  printf("<%d> POSITIVE: %d/%d\n", rank, good_models, M);
+  doctor_ack = 0;
+  isDoctorFree = false;
+  // rls docor
+  rls_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
+               which_doctor, TAG_RLS_DOCTOR, rank, size);
+
   // for receive all message (0.5 second)
   usleep(1000000);
   // print_crit_section(doctor_arr[0], rank);
@@ -126,16 +140,10 @@ void *receive_loop(void *ptr) {
 
       case TAG_ACK_DOCTOR:
         doctor_ack++;
-        printf("{%d:%d} ACK %d/%d\n", rank, status.MPI_SOURCE, doctor_ack,
-               size);
         if (doctor_ack == size - 1) {
-          printf(
-              "%d *****************************************CRIT "
-              "SECTION!!!!\n",
-              rank);
+          isDoctorFree = true;
           print_crit_section(doctor_arr[0], rank);
         }
-        receive_ack_doctor();
         break;
 
       case TAG_RLS_DOCTOR:
