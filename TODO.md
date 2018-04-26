@@ -1,9 +1,10 @@
 TODO
 - [x] Check corectness of parameters
-- [ ] Thread in MPI
-- [ ] Structure to critical section (vector of this structure)
-- [ ] Send and receive with Lamport clock
-- [ ] Initializing variable and synchronize (barier)
-- [ ] Implement doctors critical section
+- [x] Thread in MPI
+- [x] Structure to critical section (vector of this structure)
+- [x] Send and receive with Lamport clock
+- [x] Initializing variable and synchronize (barier)
+- [x] Implement doctors critical section
 - [ ] Implement salon critical section
-- [ ] Implement synchronize after all manager done work
+- [x] Implement synchronize after all manager done work
+- [ ] Check c++11 on machine in University lab
