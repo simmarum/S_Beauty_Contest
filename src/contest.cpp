@@ -40,8 +40,10 @@ int rank = 0;    // id of this thread
 int lclock = 0;  // lamport clock
 int size = 0;    // number of processes
 
-std::atomic<bool> isDoctorFree(false);
+int end_ack;
+std::atomic<bool> isEndCompute(false);
 
+std::atomic<bool> isDoctorFree(false);
 int doctor_ack;
 std::vector<crit_sruct> *doctor_arr;
 std::vector<pthread_mutex_t> doctor_mutex;
@@ -113,6 +115,10 @@ int main(int argc, char *argv[]) {
   // print_crit_section(doctor_arr[0], rank);
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
+
+  while (!isEndCompute) {
+  }
+  printf("GET END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
   pthread_join(receive_thread, NULL);
   MPI_Finalize();
   return EXIT_SUCCESS;
@@ -129,7 +135,11 @@ void *receive_loop(void *ptr) {
 
     switch (status.MPI_TAG) {
       case TAG_END:
-        is_compute = false;
+        end_ack++;
+        if (end_ack == size - 1) {
+          isEndCompute = true;
+          is_compute = false;
+        }
         break;
 
       case TAG_WANT_DOCTOR:
