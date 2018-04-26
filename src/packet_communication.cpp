@@ -29,7 +29,7 @@ void mySend(int &lclock, int message, int mem_clock, int where, int tag,
   send[2] = mem_clock;
   MPI_Send(&send, 3, MPI_INT, where, tag, MPI_COMM_WORLD);
   if (raw_s_r) {
-    printf("[%d:%d] Send '%d' and '%d' to process %d with tag %d [%s]\n",
+    printf("[%09d:%03d] Send '%d' and '%d' to process %d with tag %d [%s]\n",
            send[0], myID, send[1], send[2], where, tag, mymap[tag].c_str());
   }
   if (csv) {
@@ -59,9 +59,10 @@ void myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
     lclock = lclock + 1;
   }
   if (raw_s_r) {
-    printf("[%d:%d] Receive '%d' and '%d' from process %d with tag %d [%s]\n",
-           lclock, myID, recv[1], recv[2], status.MPI_SOURCE, status.MPI_TAG,
-           mymap[status.MPI_TAG].c_str());
+    printf(
+        "[%09d:%03d] Receive '%d' and '%d' from process %d with tag %d [%s]\n",
+        lclock, myID, recv[1], recv[2], status.MPI_SOURCE, status.MPI_TAG,
+        mymap[status.MPI_TAG].c_str());
   }
   if (csv) {
     FILE *fp;

@@ -139,8 +139,6 @@ void *receive_loop(void *ptr) {
                          status.MPI_SOURCE, position);
 
         if (position[0] > position[1]) {
-          printf("&& %d %d\n", rank, status.MPI_SOURCE);
-
           pthread_t ack_doctor_thread;
           pthread_create(&ack_doctor_thread, NULL, ack_doctor_fun,
                          &doctor_ack_tab[status.MPI_SOURCE]);
