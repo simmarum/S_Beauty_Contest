@@ -113,19 +113,27 @@ void *receive_loop(void *ptr) {
                             status.MPI_SOURCE, rank);
         find_me_crit_sec(doctor_mutex[recv[1]], doctor_arr[recv[1]], rank,
                          status.MPI_SOURCE, position);
-        printf("POS: %d & %d- %d\n", position[0], position[1], rank);
+        printf("<%d:%d> POS: %d - %d\n", rank, status.MPI_SOURCE, position[0],
+               position[1]);
 
         if (position[0] > position[1]) {
+          int to_who = status.MPI_SOURCE;
           pthread_t ack_doctor_thread;
-          pthread_create(&ack_doctor_thread, NULL, ack_doctor_fun,
-                         &status.MPI_SOURCE);
+          pthread_create(&ack_doctor_thread, NULL, ack_doctor_fun, &to_who);
         }
+
         break;
 
       case TAG_ACK_DOCTOR:
         doctor_ack++;
+        printf("{%d:%d} ACK %d/%d\n", rank, status.MPI_SOURCE, doctor_ack,
+               size);
         if (doctor_ack == size - 1) {
-          printf("*****************************************CRIT SECTION!!!!\n");
+          printf(
+              "%d *****************************************CRIT "
+              "SECTION!!!!\n",
+              rank);
+          print_crit_section(doctor_arr[0], rank);
         }
         receive_ack_doctor();
         break;
