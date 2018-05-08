@@ -17,10 +17,16 @@ void receive_rls_doctor(pthread_mutex_t &crit_mut,
                         std::vector<crit_sruct> &doct_vec, int from, int myID,
                         int &doct_ack);
 
-void receive_want_salon();
+void receive_want_salon(pthread_mutex_t &crit_mut,
+                        std::vector<crit_sruct> &sal_vec, int recv[], int from,
+                        int myID);
 void receive_ack_salon();
-void receive_rls_salon();
+void receive_rls_salon(pthread_mutex_t &crit_mut,
+                       std::vector<crit_sruct> &sal_vec, int from, int myID,
+                       int &sal_ack);
 
+int sum_table(int table[], int size);
+void clear_table(int table[], int size);
 void find_me_crit_sec(pthread_mutex_t &crit_mut,
                       std::vector<crit_sruct> &doct_vec, int myID, int youID,
                       int position[]);

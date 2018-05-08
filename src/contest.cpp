@@ -5,6 +5,7 @@
 /*         Mikołaj Stankowiak      */
 /* --------------------------------*/
 
+#include <math.h>
 #include <mpi.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -34,11 +35,15 @@ void enable_thread(int *argc, char ***argv);
 
 void *receive_loop(void *ptr);
 void *ack_doctor_fun(void *args);
+void *ack_salon_fun(void *args);
 
 // global variable
 int rank = 0;    // id of this thread
 int lclock = 0;  // lamport clock
 int size = 0;    // number of processes
+int k = 0;  // number of group to salon (how many manager may enter to salon
+            // (not S because sometimes manager may enter with 2 or 3 models in
+            // one entry))
 
 int end_ack;
 std::atomic<bool> isEndCompute(false);
@@ -49,8 +54,18 @@ std::vector<crit_sruct> *doctor_arr;
 std::vector<pthread_mutex_t> doctor_mutex;
 int *doctor_ack_tab;
 
+std::atomic<bool> isSalonFree(false);
+int salon_ack;
+std::vector<crit_sruct> salon_vec;
+pthread_mutex_t salon_mutex;
+int *salon_ack_tab;
+int *salon_crit_ack_tab;
+
 // implementations
 int main(int argc, char *argv[]) {
+  // disable buffering on stdout
+  setbuf(stdout, NULL);
+
   int L = 0;  // number of doctor
   int S = 0;  // capacity of salon
   int M = 0;  // number of models
@@ -77,13 +92,18 @@ int main(int argc, char *argv[]) {
                                // rand from 1 to capacity of Salon
 
   M = 1 + rand() / (RAND_MAX / (S - 1 + 1) + 1);
+  M = 8;
 
   // create doctor critical section mutex and ack array
   doctor_ack = 0;
   doctor_ack_tab = new int[size];
+  salon_ack_tab = new int[size];
+  salon_crit_ack_tab = new int[size];
   doctor_arr = new std::vector<crit_sruct>[size];
   for (int i = 0; i < size; i++) {
     doctor_ack_tab[i] = i;
+    salon_ack_tab[i] = i;
+    salon_crit_ack_tab[i] = 0;
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
     doctor_mutex.push_back(tmp_mutex);
   }
@@ -101,6 +121,7 @@ int main(int argc, char *argv[]) {
   }
   // critical section
   int good_models = 1 + rand() / (RAND_MAX / (M - 1 + 1) + 1);
+  good_models = 8;
   pthread_mutex_lock(&l_clock_mutex);
   printf("[%d:%d] GOOD MODELS: %d/%d from %d doctor\n", lclock, rank,
          good_models, M, which_doctor);
@@ -110,6 +131,37 @@ int main(int argc, char *argv[]) {
   // rls docor
   rls_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                which_doctor, TAG_RLS_DOCTOR, rank, size);
+
+  // salon section
+  int how_many_models_left = 0;
+  int x = (int)std::ceil((float)S / (float)size);
+
+  k = (int)std::floor(S / x);
+  // as long as is good_models
+  while (how_many_models_left < good_models) {
+    salon_ack = 0;
+    want_crit_sec(salon_mutex, salon_vec, lclock, -1, TAG_WANT_SALON, rank,
+                  size);
+    if (size <= k) {  // case when number of manager is smaller or equal than
+                      // compute capacity of salon (no need to check ACK from
+                      // other because for all will be place in salon)
+      isSalonFree = true;
+    }
+    while (!isSalonFree) {
+    }
+    salon_ack = 0;
+    // critical section
+    how_many_models_left += x;  // x models was in salon
+    if (how_many_models_left > good_models) how_many_models_left = good_models;
+
+    pthread_mutex_lock(&l_clock_mutex);
+    printf("[%d:%d] SO FAR %d/%d WAS IN SALON\n", lclock, rank,
+           how_many_models_left, good_models);
+    pthread_mutex_unlock(&l_clock_mutex);
+    isSalonFree = false;
+    // rls salon
+    rls_crit_sec(salon_mutex, salon_vec, lclock, -1, TAG_RLS_SALON, rank, size);
+  }
 
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
@@ -161,7 +213,6 @@ void *receive_loop(void *ptr) {
         break;
 
       case TAG_RLS_DOCTOR:
-
         receive_rls_doctor(doctor_mutex[recv[1]], doctor_arr[recv[1]],
                            status.MPI_SOURCE, rank, doctor_ack);
         if (!isDoctorFree) {
@@ -172,15 +223,33 @@ void *receive_loop(void *ptr) {
         break;
 
       case TAG_WANT_SALON:
-        receive_want_salon();
+        receive_want_salon(salon_mutex, salon_vec, recv, status.MPI_SOURCE,
+                           rank);
+        find_me_crit_sec(salon_mutex, salon_vec, rank, status.MPI_SOURCE,
+                         position);
+        if (position[0] > position[1] && position[0] >= k) {
+          pthread_t ack_salon_thread;
+          int tmp_to = status.MPI_SOURCE;
+          pthread_create(&ack_salon_thread, NULL, ack_salon_fun,
+                         &salon_ack_tab[tmp_to]);
+        }
         break;
 
       case TAG_ACK_SALON:
-        receive_ack_salon();
+        salon_ack++;
+        if (salon_ack == size - k) {
+          isSalonFree = true;
+        }
         break;
 
       case TAG_RLS_SALON:
-        receive_rls_salon();
+        receive_rls_salon(salon_mutex, salon_vec, status.MPI_SOURCE, rank,
+                          salon_ack);
+        if (!isSalonFree) {
+          if (salon_ack == size - k) {
+            isSalonFree = true;
+          }
+        }
         break;
 
       default:
@@ -194,6 +263,12 @@ void *receive_loop(void *ptr) {
 void *ack_doctor_fun(void *args) {
   int to = *(int *)args;
   mySend(lclock, -1, -1, to, TAG_ACK_DOCTOR, rank);
+  return EXIT_SUCCESS;
+}
+
+void *ack_salon_fun(void *args) {
+  int to = *(int *)args;
+  mySend(lclock, -1, -1, to, TAG_ACK_SALON, rank);
   return EXIT_SUCCESS;
 }
 

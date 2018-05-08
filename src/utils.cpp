@@ -26,9 +26,41 @@ void receive_rls_doctor(pthread_mutex_t &crit_mut,
   pthread_mutex_unlock(&crit_mut);
 };
 
-void receive_want_salon(){};
+void receive_want_salon(pthread_mutex_t &crit_mut,
+                        std::vector<crit_sruct> &sal_vec, int recv[], int from,
+                        int myID) {
+  crit_sruct tmp_struct;
+  tmp_struct.clock = recv[3];
+  tmp_struct.proces_id = from;
+  pthread_mutex_lock(&crit_mut);
+  sal_vec.push_back(tmp_struct);
+  sort_section(sal_vec);
+  pthread_mutex_unlock(&crit_mut);
+};
+
 void receive_ack_salon(){};
-void receive_rls_salon(){};
+void receive_rls_salon(pthread_mutex_t &crit_mut,
+                       std::vector<crit_sruct> &sal_vec, int from, int myID,
+                       int &sal_ack) {
+  pthread_mutex_lock(&crit_mut);
+  sal_ack++;
+  remove_from_crit_vec(sal_vec, from);
+  pthread_mutex_unlock(&crit_mut);
+};
+
+int sum_table(int table[], int size) {
+  int sum = 0;
+  for (int i = 0; i < size; i++) {
+    sum += table[i];
+  }
+  return sum;
+}
+
+void clear_table(int table[], int size) {
+  for (int i = 0; i < size; i++) {
+    table[i] = 0;
+  }
+}
 
 void find_me_crit_sec(pthread_mutex_t &crit_mut,
                       std::vector<crit_sruct> &doct_vec, int myID, int youID,
