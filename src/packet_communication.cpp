@@ -32,18 +32,7 @@ void mySend(int &lclock, int message, int mem_clock, int where, int tag,
     printf("[%09d:%03d] Send '%d' and '%d' to process %d with tag %d [%s]\n",
            send[0], myID, send[1], send[2], where, tag, mymap[tag].c_str());
   }
-  if (csv) {
-    FILE *fp;
-    sprintf(filename, "log/log_%d.csv", (int)now);
-    if ((fp = fopen(filename, "a")) == NULL) {
-      printf("Can't open output file %s!\n", filename);
-      exit(EXIT_FAILURE);
-    } else {
-      fprintf(fp, "%d,%d,%c,%d,%d,%d,%d\n", send[0], myID, 'S', send[1],
-              send[2], where, tag);
-      fclose(fp);
-    }
-  }
+
   pthread_mutex_unlock(&l_clock_mutex);
   pthread_mutex_unlock(&send_clock_mutex);
 }
@@ -63,18 +52,6 @@ void myRecv(int &lclock, int recv[], int from, int tag, MPI_Status &status,
         "[%09d:%03d] Receive '%d' and '%d' from process %d with tag %d [%s]\n",
         lclock, myID, recv[1], recv[2], status.MPI_SOURCE, status.MPI_TAG,
         mymap[status.MPI_TAG].c_str());
-  }
-  if (csv) {
-    FILE *fp;
-    sprintf(filename, "log/log_%d.csv", (int)now);
-    if ((fp = fopen(filename, "a")) == NULL) {
-      printf("Can't open output file %s!\n", filename);
-      exit(EXIT_FAILURE);
-    } else {
-      fprintf(fp, "%d,%d,%c,%d,%d,%d,%d\n", lclock, myID, 'R', recv[1], recv[2],
-              status.MPI_SOURCE, status.MPI_TAG);
-      fclose(fp);
-    }
   }
   pthread_mutex_unlock(&l_clock_mutex);
   pthread_mutex_unlock(&recv_clock_mutex);

@@ -13,6 +13,8 @@
 
 #include <map>
 #include <string>
+/*
+ * Map to mapping define TAG to string with name
+ */
 extern std::map<int, std::string> mymap;
-extern int a;
 #endif  // TAGS_H

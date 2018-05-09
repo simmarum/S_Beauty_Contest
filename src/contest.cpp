@@ -22,7 +22,6 @@
 #include "utils.h"
 
 int raw_s_r = true;
-int csv = false;
 int debug = false;
 
 pthread_mutex_t l_clock_mutex = PTHREAD_MUTEX_INITIALIZER;

@@ -1,4 +1,5 @@
 #include "tags.h"
+
 std::map<int, std::string> mymap = {{TAG_END, "End process"},
                                     {TAG_WANT_DOCTOR, "Want doctor"},
                                     {TAG_ACK_DOCTOR, "Acknowledge doctor"},
