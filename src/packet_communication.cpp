@@ -1,3 +1,4 @@
+
 #include "packet_communication.h"
 #include <mpi.h>
 #include <pthread.h>
@@ -13,10 +14,6 @@
 extern pthread_mutex_t l_clock_mutex;
 pthread_mutex_t send_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t recv_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-char filename[40];
-struct tm *timenow;
-time_t now = time(NULL);
 
 void mySend(int &lclock, int message, int mem_clock, int where, int tag,
             int myID) {

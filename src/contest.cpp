@@ -73,21 +73,25 @@ int k = 0;  // number of group to salon (how many manager may enter to salon
             // (not S because sometimes manager may enter with 2 or 3 models in
             // one entry))
 
-int end_ack;
-std::atomic<bool> isEndCompute(false);
+int end_ack;                            // how many ack for end compute receive
+std::atomic<bool> isEndCompute(false);  // condition for end compute
 
-std::atomic<bool> isDoctorFree(false);
-int doctor_ack;
-std::vector<crit_sruct> *doctor_arr;
-std::vector<pthread_mutex_t> doctor_mutex;
-int *doctor_ack_tab;
+std::atomic<bool> isDoctorFree(
+    false);      // condition for doctor's critical section
+int doctor_ack;  // how many ack for doctor's critical section receive
+std::vector<crit_sruct>
+    *doctor_arr;  // array of queues for critical section for doctor
+std::vector<pthread_mutex_t> doctor_mutex;  // mutex for queue above
+int *doctor_ack_tab;  // array of int with process id for additional send in
+                      // receive loop
 
-std::atomic<bool> isSalonFree(false);
-int salon_ack;
-std::vector<crit_sruct> salon_vec;
-pthread_mutex_t salon_mutex;
-int *salon_ack_tab;
-int *salon_crit_ack_tab;
+std::atomic<bool> isSalonFree(false);  // condition for salon critical section
+int salon_ack;  // how many ack for salon critical section receive
+std::vector<crit_sruct> salon_vec;  // queue for salon critical section
+pthread_mutex_t salon_mutex =
+    PTHREAD_MUTEX_INITIALIZER;  // mutex fot queue above
+int *salon_ack_tab;  // array of int with process id for additional send in
+                     // receive loop
 
 // #######################################################
 // ########## FUNCTION IMPLEMENTATION ####################
@@ -113,63 +117,76 @@ int main(int argc, char *argv[]) {
   pthread_t receive_thread;
   pthread_create(&receive_thread, NULL, receive_loop, 0);
 
-  // initialize everything
-
+  // get process id and number of all process
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
 
-  srand(rank + (int)time(0));  // random seed
-                               // rand from 1 to capacity of Salon
+  // random seed depends on process id
+  srand(rank + (int)time(0));
 
+  // rand from 1 to capacity of Salon
   M = 1 + rand() / (RAND_MAX / (S - 1 + 1) + 1);
-  M = 8;
 
-  // create doctor critical section mutex and ack array
+  // initialize variable for critical sections
   doctor_ack = 0;
+  salon_ack = 0;
   doctor_ack_tab = new int[size];
   salon_ack_tab = new int[size];
-  salon_crit_ack_tab = new int[size];
   doctor_arr = new std::vector<crit_sruct>[size];
   for (int i = 0; i < size; i++) {
     doctor_ack_tab[i] = i;
     salon_ack_tab[i] = i;
-    salon_crit_ack_tab[i] = 0;
     pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
     doctor_mutex.push_back(tmp_mutex);
   }
+
   // synchronize
   MPI_Barrier(MPI_COMM_WORLD);
 
-  // starts proper compute
+  /// starts proper compute
+
+  // evenly allocate doctors
+  int which_doctor = rank % L;
 
   // want critical section for doctor
-  int which_doctor = rank % L;
   want_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                 which_doctor, TAG_WANT_DOCTOR, rank, size);
 
   while (!isDoctorFree) {
+    // check for critical section
   }
-  // critical section
+  // now in critical section
+
+  // get good model from doctor
   int good_models = 1 + rand() / (RAND_MAX / (M - 1 + 1) + 1);
-  good_models = 8;
+
+  // print information about visit doctor
   pthread_mutex_lock(&l_clock_mutex);
   printf("[%d:%d] GOOD MODELS: %d/%d from %d doctor\n", lclock, rank,
          good_models, M, which_doctor);
   pthread_mutex_unlock(&l_clock_mutex);
+
+  // clear doctor ack
   doctor_ack = 0;
 
-  // rls docor
+  // rls doctor
   rls_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                which_doctor, TAG_RLS_DOCTOR, rank, size);
 
   // salon section
-  int how_many_models_left = 0;
-  int x = (int)std::ceil((float)S / (float)size);
 
+  // count how many models was in salon
+  int how_many_models_was_in_salon = 0;
+
+  // compute k fractor
+  int x = (int)std::ceil((float)S / (float)size);
   k = (int)std::floor(S / x);
+
   // as long as is good_models
-  while (how_many_models_left < good_models) {
+  while (how_many_models_was_in_salon < good_models) {
+    // clear salon ack counter
     salon_ack = 0;
+
     want_crit_sec(salon_mutex, salon_vec, lclock, -1, TAG_WANT_SALON, rank,
                   size);
     if (size <= k) {  // case when number of manager is smaller or equal than
@@ -177,30 +194,44 @@ int main(int argc, char *argv[]) {
                       // other because for all will be place in salon)
       isSalonFree = true;
     }
-    while (!isSalonFree) {
-    }
-    salon_ack = 0;
-    // critical section
-    how_many_models_left += x;  // x models was in salon
-    if (how_many_models_left > good_models) how_many_models_left = good_models;
 
+    while (!isSalonFree) {
+      // wait for critical section
+    }
+
+    // now in critical section
+    how_many_models_was_in_salon += x;  // x models was in salon
+    if (how_many_models_was_in_salon > good_models)
+      how_many_models_was_in_salon = good_models;  // edge case with overload
+
+    // print information about visit in salon
     pthread_mutex_lock(&l_clock_mutex);
     printf("[%d:%d] SO FAR %d/%d WAS IN SALON\n", lclock, rank,
-           how_many_models_left, good_models);
+           how_many_models_was_in_salon, good_models);
     pthread_mutex_unlock(&l_clock_mutex);
-    isSalonFree = false;
+
     // rls salon
+    isSalonFree = false;
     rls_crit_sec(salon_mutex, salon_vec, lclock, -1, TAG_RLS_SALON, rank, size);
   }
+
+  // clear salon ack
+  salon_ack = 0;
 
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
 
   while (!isEndCompute) {
+    // wait for other process
   }
+
+  // print information that everyone is done his work and start contest
   printf("GET END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
+
+  // clean up after work
   pthread_join(receive_thread, NULL);
   MPI_Finalize();
+
   return EXIT_SUCCESS;
 }
 
