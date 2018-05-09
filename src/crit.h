@@ -57,4 +57,43 @@ void want_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
  */
 void rls_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
                   int &lclock, int message, int tag, int myID, int sizePool);
+
+/*
+ * Function to find position in queue to critical section
+ * In 'position' will be on 0 index position of process with 'myID'
+ * In 'position' will be on 1 index position of process with 'youID'
+ * If process is not in queue, return INT_MAX
+ * @p crit_mut - mutex to handle operation on crit_vec
+ * @p crit_vec - vector with queue to critical section
+ * @p myID - ID of process that call this function
+ * @p youID - ID of process that send message to us (we want to know his
+ * position to compare places in the queue)
+ * @p position - array of two int
+ */
+void find_me_crit_sec(pthread_mutex_t &crit_mut,
+                      std::vector<crit_sruct> &crit_vec, int myID, int youID,
+                      int position[]);
+/*
+ * Function to find position in queue to critical section and remove first
+ * occurrence
+ * @p crit_mut - mutex to handle operation on crit_vec
+ * @p crit_vec - vector with queue to critical section
+ * @p myID - ID of process that call this function - first entry with this ID
+ * will be remove
+ */
+// TODO - add mutex!
+void remove_from_crit_vec(std::vector<crit_sruct> &crit_vec, int myID);
+
+/*
+ * Function to print proper critical section with iformation about which process
+ * it is It is not in one 'printf' so may be mixing with printf from other
+ * threads
+ * @p crit_mut - mutex to handle operation on crit_vec
+ * @p c_vec - vector with queue to critical section
+ * @p myID - ID of process that call this function - first entry with this ID
+ * will be remove
+ */
+// TODO - add mutex!
+void print_crit_section(std::vector<crit_sruct> &c_vec, int myID);
+
 #endif  // CRIT_H

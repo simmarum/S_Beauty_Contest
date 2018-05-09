@@ -41,3 +41,38 @@ void rls_crit_sec(pthread_mutex_t &crit_mut, std::vector<crit_sruct> &crit_vec,
 
   myBroadCast(lclock, message, -1, tag, myID, sizePool);
 }
+
+void find_me_crit_sec(pthread_mutex_t &crit_mut,
+                      std::vector<crit_sruct> &crit_vec, int myID, int youID,
+                      int position[]) {
+  position[0] = INT_MAX;
+  position[1] = INT_MAX;
+  pthread_mutex_lock(&crit_mut);
+  for (size_t i = 0; i < crit_vec.size(); i++) {
+    if (crit_vec[i].proces_id == myID) {
+      position[0] = i;
+    }
+    if (crit_vec[i].proces_id == youID) {
+      position[1] = i;
+    }
+    pthread_mutex_unlock(&crit_mut);
+  }
+}
+
+void remove_from_crit_vec(std::vector<crit_sruct> &crit_vec, int myID) {
+  for (size_t i = 0; i < crit_vec.size(); i++) {
+    if (crit_vec[i].proces_id == myID) {
+      crit_vec.erase(crit_vec.begin() + i);
+      break;
+    }
+  }
+}
+
+void print_crit_section(std::vector<crit_sruct> &c_vec, int myID) {
+  printf("---CRIT START--- (for %d process):\n", myID);
+  for (size_t i = 0; i < c_vec.size(); i++) {
+    printf("[%d] %zu: %d and %d\n", myID, i, c_vec[i].clock,
+           c_vec[i].proces_id);
+  }
+  printf("---CRIT END---\n");
+}
