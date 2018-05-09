@@ -68,11 +68,14 @@ void remove_from_crit_vec(std::vector<crit_sruct> &crit_vec, int myID) {
   }
 }
 
-void print_crit_section(std::vector<crit_sruct> &c_vec, int myID) {
+void print_crit_section(pthread_mutex_t &c_mut, std::vector<crit_sruct> &c_vec,
+                        int myID) {
+  pthread_mutex_lock(&c_mut);
   printf("---CRIT START--- (for %d process):\n", myID);
   for (size_t i = 0; i < c_vec.size(); i++) {
     printf("[%d] %zu: %d and %d\n", myID, i, c_vec[i].clock,
            c_vec[i].proces_id);
   }
   printf("---CRIT END---\n");
+  pthread_mutex_unlock(&c_mut);
 }

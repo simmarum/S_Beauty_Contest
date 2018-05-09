@@ -21,22 +21,51 @@
 #include "tags.h"
 #include "utils.h"
 
-int raw_s_r = true;
-int debug = false;
+// #######################################################
+// ########## FUNCTION DEFINITION ########################
+// #######################################################
+/*
+ * Check program arguments for correctnes
+ * @p argc - number of argument
+ * @p argv - array of parameters
+ * @p L - number of doctors
+ * @p S - capacity of salon
+ */
+bool cli_parameters(int argc, char *argv[], int &L, int &S);
+
+/*
+ * Function to enable multithreading in MPI (copy paste from stackoverflow)
+ * @p argc - number of argument
+ * @p argv - array of parameters
+ */
+void enable_thread(int *argc, char ***argv);
+
+/*
+ * Function to receive message from others processes without impact on main
+ * thread. It is run as new thread.
+ */
+void *receive_loop(void *ptr);
+/*
+ * Special function to send doctors ack after receive message (new thread to not
+ * nest RECEIVE and SEND). It is run as new thread.
+ */
+void *ack_doctor_fun(void *args);
+/*
+ * Special function to send salon ack after receive message (new thread to not
+ * nest RECEIVE and SEND). It is run as new thread.
+ */
+void *ack_salon_fun(void *args);
+
+// #######################################################
+// ########## GLOBAL VARIABLE ############################
+// #######################################################
+int raw_s_r = true;  // printf message on send and receive
+int debug = false;   // to avoid unnecessary print
 
 pthread_mutex_t l_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
 extern pthread_mutex_t send_clock_mutex;
 extern pthread_mutex_t recv_clock_mutex;
 
-// function definitions
-bool cli_parameters(int argc, char *argv[], int &L, int &S);
-void enable_thread(int *argc, char ***argv);
-
-void *receive_loop(void *ptr);
-void *ack_doctor_fun(void *args);
-void *ack_salon_fun(void *args);
-
-// global variable
 int rank = 0;    // id of this thread
 int lclock = 0;  // lamport clock
 int size = 0;    // number of processes
@@ -60,7 +89,9 @@ pthread_mutex_t salon_mutex;
 int *salon_ack_tab;
 int *salon_crit_ack_tab;
 
-// implementations
+// #######################################################
+// ########## FUNCTION IMPLEMENTATION ####################
+// #######################################################
 int main(int argc, char *argv[]) {
   // disable buffering on stdout
   setbuf(stdout, NULL);

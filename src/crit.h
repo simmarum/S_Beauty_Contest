@@ -81,7 +81,6 @@ void find_me_crit_sec(pthread_mutex_t &crit_mut,
  * @p myID - ID of process that call this function - first entry with this ID
  * will be remove
  */
-// TODO - add mutex!
 void remove_from_crit_vec(std::vector<crit_sruct> &crit_vec, int myID);
 
 /*
@@ -93,7 +92,7 @@ void remove_from_crit_vec(std::vector<crit_sruct> &crit_vec, int myID);
  * @p myID - ID of process that call this function - first entry with this ID
  * will be remove
  */
-// TODO - add mutex!
-void print_crit_section(std::vector<crit_sruct> &c_vec, int myID);
+void print_crit_section(pthread_mutex_t &c_mut, std::vector<crit_sruct> &c_vec,
+                        int myID);
 
 #endif  // CRIT_H
