@@ -8,7 +8,7 @@ TODO
 - [x] Implement salon critical section
 - [x] Implement synchronize after all manager done work
 - [x] Check c++11 on machine in University lab
-- [ ] Add docs comments before functions in .h file
-- [ ] Move function to place where it should be
-- [ ] Add comments to code where it is needed to better understand
-- [ ] Check all TODO in code and implement it
+- [x] Add docs comments before functions in .h file
+- [x] Move function to place where it should be
+- [x] Add comments to code where it is needed to better understand
+- [x] Check all TODO in code and implement it
