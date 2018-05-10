@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 
-extern int raw_s_r;
+extern bool raw_s_r;
 
 /*
  * To send and receive is use array of three int [lamport_clock, message,

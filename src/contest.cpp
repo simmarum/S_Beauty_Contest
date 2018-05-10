@@ -59,8 +59,9 @@ void *ack_salon_fun(void *args);
 // #######################################################
 // ########## GLOBAL VARIABLE ############################
 // #######################################################
-int raw_s_r = true;  // printf message on send and receive
-int debug = false;   // to avoid unnecessary print
+bool raw_s_r = false;  // printf message on send and receive
+bool debug = false;    // to avoid unnecessary print
+bool p_print = false;  // print useful information about section
 
 pthread_mutex_t l_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
 extern pthread_mutex_t send_clock_mutex;
@@ -268,6 +269,13 @@ void *receive_loop(void *ptr) {
 
       case TAG_ACK_DOCTOR:
         doctor_ack++;
+
+        if (p_print) {
+          pthread_mutex_lock(&l_clock_mutex);
+          printf("[%d:%d] %d/%d ACK FOR DOCTOR (ACK)\n", lclock, rank,
+                 doctor_ack, size - 1);
+          pthread_mutex_unlock(&l_clock_mutex);
+        }
         if (doctor_ack == size - 1) {
           isDoctorFree = true;
         }
@@ -276,6 +284,12 @@ void *receive_loop(void *ptr) {
       case TAG_RLS_DOCTOR:
         receive_rls_doctor(doctor_mutex[recv[1]], doctor_arr[recv[1]],
                            status.MPI_SOURCE, rank, doctor_ack);
+        if (p_print) {
+          pthread_mutex_lock(&l_clock_mutex);
+          printf("[%d:%d] %d/%d ACK FOR DOCTOR (RLS)\n", lclock, rank,
+                 doctor_ack, size - 1);
+          pthread_mutex_unlock(&l_clock_mutex);
+        }
         if (!isDoctorFree) {
           if (doctor_ack == size - 1) {
             isDoctorFree = true;
@@ -298,6 +312,12 @@ void *receive_loop(void *ptr) {
 
       case TAG_ACK_SALON:
         salon_ack++;
+        if (p_print) {
+          pthread_mutex_lock(&l_clock_mutex);
+          printf("[%d:%d] %d/%d ACK FOR SALON (ACK)\n", lclock, rank, salon_ack,
+                 size - k);
+          pthread_mutex_unlock(&l_clock_mutex);
+        }
         if (salon_ack == size - k) {
           isSalonFree = true;
         }
@@ -306,6 +326,12 @@ void *receive_loop(void *ptr) {
       case TAG_RLS_SALON:
         receive_rls_salon(salon_mutex, salon_vec, status.MPI_SOURCE, rank,
                           salon_ack);
+        if (p_print) {
+          pthread_mutex_lock(&l_clock_mutex);
+          printf("[%d:%d] %d/%d ACK FOR SALON (RLS)\n", lclock, rank, salon_ack,
+                 size - k);
+          pthread_mutex_unlock(&l_clock_mutex);
+        }
         if (!isSalonFree) {
           if (salon_ack == size - k) {
             isSalonFree = true;
