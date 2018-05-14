@@ -74,6 +74,9 @@ int k = 0;  // number of group to salon (how many manager may enter to salon
             // (not S because sometimes manager may enter with 2 or 3 models in
             // one entry))
 
+std::atomic<bool> isThreadSend(
+    false);  // to prevent send from thread after finalize
+
 int end_ack;                            // how many ack for end compute receive
 std::atomic<bool> isEndCompute(false);  // condition for end compute
 
@@ -231,6 +234,10 @@ int main(int argc, char *argv[]) {
 
   // clean up after work
   pthread_join(receive_thread, NULL);
+
+  while (!isThreadSend) {
+    // check if some thread is in send mode
+  }
   MPI_Finalize();
 
   return EXIT_SUCCESS;
@@ -348,14 +355,18 @@ void *receive_loop(void *ptr) {
 }
 
 void *ack_doctor_fun(void *args) {
+  isThreadSend = true;
   int to = *(int *)args;
   mySend(lclock, -1, -1, to, TAG_ACK_DOCTOR, rank);
+  isThreadSend = false;
   return EXIT_SUCCESS;
 }
 
 void *ack_salon_fun(void *args) {
+  isThreadSend = true;
   int to = *(int *)args;
   mySend(lclock, -1, -1, to, TAG_ACK_SALON, rank);
+  isThreadSend = false;
   return EXIT_SUCCESS;
 }
 
