@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
   }
 
   // print information that everyone is done his work and start contest
-  printf("GET END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
+  printf("GET ALL END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
 
   // clean up after work
   is_compute = false;
