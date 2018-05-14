@@ -59,9 +59,9 @@ void *ack_salon_fun(void *args);
 // #######################################################
 // ########## GLOBAL VARIABLE ############################
 // #######################################################
-bool raw_s_r = false;  // printf message on send and receive
-bool debug = false;    // to avoid unnecessary print
-bool p_print = false;  // print useful information about section
+bool raw_s_r = true;  // printf message on send and receive
+bool debug = false;   // to avoid unnecessary print
+bool p_print = true;  // print useful information about section
 
 pthread_mutex_t l_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
 extern pthread_mutex_t send_clock_mutex;
@@ -77,8 +77,9 @@ int k = 0;  // number of group to salon (how many manager may enter to salon
 std::atomic<bool> isThreadSend(
     false);  // to prevent send from thread after finalize
 
-int end_ack;                            // how many ack for end compute receive
+std::atomic<int> end_ack(0);            // how many ack for end compute receive
 std::atomic<bool> isEndCompute(false);  // condition for end compute
+std::atomic<bool> is_compute(true);     // condition for end receive thread
 
 std::atomic<bool> isDoctorFree(
     false);      // condition for doctor's critical section
@@ -224,7 +225,6 @@ int main(int argc, char *argv[]) {
 
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
-
   while (!isEndCompute) {
     // wait for other process
   }
@@ -233,9 +233,11 @@ int main(int argc, char *argv[]) {
   printf("GET END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
 
   // clean up after work
+  is_compute = false;
+  mySend(lclock, -1, -1, rank, TAG_END, rank);
   pthread_join(receive_thread, NULL);
 
-  while (!isThreadSend) {
+  while (isThreadSend) {
     // check if some thread is in send mode
   }
   MPI_Finalize();
@@ -244,7 +246,6 @@ int main(int argc, char *argv[]) {
 }
 
 void *receive_loop(void *ptr) {
-  bool is_compute = true;
   while (is_compute) {
     MPI_Status status;
     int recv[3];
@@ -257,7 +258,6 @@ void *receive_loop(void *ptr) {
         end_ack++;
         if (end_ack == size - 1) {
           isEndCompute = true;
-          is_compute = false;
         }
         break;
 
@@ -357,7 +357,9 @@ void *receive_loop(void *ptr) {
 void *ack_doctor_fun(void *args) {
   isThreadSend = true;
   int to = *(int *)args;
-  mySend(lclock, -1, -1, to, TAG_ACK_DOCTOR, rank);
+  if (!isEndCompute) {
+    mySend(lclock, -1, -1, to, TAG_ACK_DOCTOR, rank);
+  }
   isThreadSend = false;
   return EXIT_SUCCESS;
 }
@@ -365,7 +367,9 @@ void *ack_doctor_fun(void *args) {
 void *ack_salon_fun(void *args) {
   isThreadSend = true;
   int to = *(int *)args;
-  mySend(lclock, -1, -1, to, TAG_ACK_SALON, rank);
+  if (!isEndCompute) {
+    mySend(lclock, -1, -1, to, TAG_ACK_SALON, rank);
+  }
   isThreadSend = false;
   return EXIT_SUCCESS;
 }
