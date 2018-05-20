@@ -76,6 +76,7 @@ int k = 0;  // number of group to salon (how many manager may enter to salon
 
 std::atomic<bool> isThreadSend(
     false);  // to prevent send from thread after finalize
+std::atomic<bool> isReceiveWait(false);  
 
 std::atomic<int> end_ack(0);            // how many ack for end compute receive
 std::atomic<bool> isEndCompute(false);  // condition for end compute
@@ -232,10 +233,14 @@ int main(int argc, char *argv[]) {
   // print information that everyone is done his work and start contest
   printf("GET ALL END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
 
+  while(!isReceiveWait){
+    // wait until receive loop is inside while loop
+  }
+  usleep(500000); // for wait after all message will be delivered
   // clean up after work
   is_compute = false;
   mySend(lclock, -1, -1, rank, TAG_END, rank);
-  pthread_join(receive_thread, NULL);
+  pthread_join(receive_thread, NULL); 
 
   while (isThreadSend) {
     // check if some thread is in send mode
@@ -247,10 +252,11 @@ int main(int argc, char *argv[]) {
 
 void *receive_loop(void *ptr) {
   while (is_compute) {
+    isReceiveWait = true;
     MPI_Status status;
     int recv[3];
     myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
-
+    isReceiveWait = false;
     int position[2];
 
     switch (status.MPI_TAG) {
