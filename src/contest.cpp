@@ -76,6 +76,7 @@ int k = 0;  // number of group to salon (how many manager may enter to salon
 
 std::atomic<bool> isThreadSend(
     false);  // to prevent send from thread after finalize
+std::atomic<bool> isReceiveWait(false);
 
 std::atomic<int> end_ack(0);            // how many ack for end compute receive
 std::atomic<bool> isEndCompute(false);  // condition for end compute
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
   // get process id and number of all process
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); /* get current process id */
   MPI_Comm_size(MPI_COMM_WORLD, &size); /* get number of processes */
-
+  printf("!!!!!!!!!!!!!!!!!!!!!!!!!!%d\n",size);
   // random seed depends on process id
   srand(rank + (int)time(0));
 
@@ -157,6 +158,9 @@ int main(int argc, char *argv[]) {
   want_crit_sec(doctor_mutex[which_doctor], doctor_arr[which_doctor], lclock,
                 which_doctor, TAG_WANT_DOCTOR, rank, size);
 
+  if(size==1){
+    isDoctorFree = true;
+  }
   while (!isDoctorFree) {
     // check for critical section
   }
@@ -200,6 +204,10 @@ int main(int argc, char *argv[]) {
       isSalonFree = true;
     }
 
+    if(size==1){
+      isSalonFree = true;
+    }
+
     while (!isSalonFree) {
       // wait for critical section
     }
@@ -225,6 +233,10 @@ int main(int argc, char *argv[]) {
 
   // send end compute and exit process
   send_end_compute(lclock, rank, size);
+
+  if(size==1){
+    isEndCompute = true;
+  }
   while (!isEndCompute) {
     // wait for other process
   }
@@ -232,6 +244,14 @@ int main(int argc, char *argv[]) {
   // print information that everyone is done his work and start contest
   printf("GET ALL END ACK FROM OTHERS - START CONTEST FROM %d\n", rank);
 
+  if(size==1){
+    isReceiveWait = true;
+  }
+
+  while(!isReceiveWait){
+    // wait until receive loop is inside while loop
+  }
+  usleep(500000); // for wait after all message will be delivered
   // clean up after work
   is_compute = false;
   mySend(lclock, -1, -1, rank, TAG_END, rank);
@@ -240,6 +260,7 @@ int main(int argc, char *argv[]) {
   while (isThreadSend) {
     // check if some thread is in send mode
   }
+
   MPI_Finalize();
 
   return EXIT_SUCCESS;
@@ -247,10 +268,11 @@ int main(int argc, char *argv[]) {
 
 void *receive_loop(void *ptr) {
   while (is_compute) {
+    isReceiveWait = true;
     MPI_Status status;
     int recv[3];
     myRecv(lclock, recv, MPI_ANY_SOURCE, MPI_ANY_TAG, status, rank);
-
+    isReceiveWait = false;
     int position[2];
 
     switch (status.MPI_TAG) {

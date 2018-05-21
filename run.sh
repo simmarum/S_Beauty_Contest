@@ -10,21 +10,28 @@ INFO_ERROR="\nTry run program with 3 argumetns (N-number of proccesses, L-number
 if [ -z "$1" ]
   then
     echo "Number of proccesses is missing (N)"
-    echo "$INFO_ERROR"
+    echo -e "$INFO_ERROR"
+    exit 1
+fi
+
+if [ "$1" -eq "0" ]
+  then
+    echo "Number of proccesses is ZERO!"
+    echo -e "$INFO_ERROR"
     exit 1
 fi
 
 if [ -z "$2" ]
   then
     echo "Number of doctors is missing (L)"
-    echo "$INFO_ERROR"
+    echo -e "$INFO_ERROR"
     exit 1
 fi
 
 if [ -z "$3" ]
   then
     echo "Capacity of salon is missing (S)"
-    echo "$INFO_ERROR"
+    echo -e "$INFO_ERROR"
     exit 1
 fi
 
